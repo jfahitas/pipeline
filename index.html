@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leadership Pipeline Experimentation Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0515;
+            --panel-bg: rgba(255, 255, 255, 0.04);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #e0e0e0;
+            --text-muted: rgba(255, 255, 255, 0.9); /* Increased opacity for readability */
+            --accent-color: #ffb3b3;
+            --brand-color: #500000;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --error-color: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at top, #0f0515 0%, #1a0a1a 30%, #2d1b2e 70%, #0f0515 100%);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .main-title {
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 600;
+            background: linear-gradient(135deg, #ffffff, var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-subtitle {
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeInUp 0.5s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .scenario-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .scenario-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            background: rgba(80, 0, 0, 0.3);
+            border-color: var(--accent-color);
+        }
+        .scenario-card h3 { color: var(--accent-color); margin-bottom: 0.5rem; }
+
+        .phase-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(80, 0, 0, 0.2);
+            border-radius: 16px;
+        }
+        .phase-title { font-size: 1.5rem; font-weight: 600; color: #fff; }
+        .phase-description { color: var(--text-muted); }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+        }
+
+        .decision-panel {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .sidebar-section {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+        }
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        .sidebar-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .sidebar-content li {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+        .sidebar-content li::before {
+            content: '•';
+            color: #fff;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        
+        .step-instruction {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .choice-option {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        .choice-option:hover {
+            border-color: var(--accent-color);
+            background: rgba(80, 0, 0, 0.3);
+        }
+        .choice-option.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .btn {
+            padding: 12px 25px; border: none; border-radius: 10px; cursor: pointer;
+            font-weight: 600; font-size: 14px; transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2ecc71, #27ae60); color: white;
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .results-panel { display: none; }
+        .results-panel.show { display: block; }
+        
+        .feedback-section { background: rgba(255, 255, 255, 0.04); border-radius: 14px; padding: 20px; text-align: center; }
+        .feedback-title { font-size: 1.5rem; font-weight: 600; color: var(--accent-color); margin-bottom: 12px; }
+        .final-score { font-size: 3rem; font-weight: 700; color: var(--success-color); margin-bottom: 1rem; }
+        .next-step-section { text-align: center; margin-top: 30px; }
+        
+        .choice-feedback {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s;
+        }
+        .feedback-item { margin-bottom: 1rem; }
+        .feedback-item:last-child { margin-bottom: 0; }
+        .feedback-item h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .feedback-item p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .optimal-choice h5 { color: var(--success-color); }
+        .your-choice h5 { color: var(--error-color); }
+
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .sidebar { order: -1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header-section">
+            <h1 class="main-title">Pipeline Experimentation Designer</h1>
+            <p class="main-subtitle">Building Sustainable Leadership Capability</p>
+        </header>
+
+        <div id="main-view">
+            <div id="intro" class="tab-content active">
+                <h2 style="color: #ffb3b3; margin-bottom: 10px; text-align: center;">Welcome!</h2>
+                <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">Select a scenario to design a leadership pipeline experiment.</p>
+                <div class="scenario-selection-grid"></div>
+            </div>
+
+            <div id="scenario" class="tab-content">
+                <!-- Scenario content will be injected here -->
+            </div>
+
+            <div id="results" class="tab-content results-panel">
+                <div class="phase-header" style="text-align:center;">
+                    <h2 class="phase-title">Experiment Debrief</h2>
+                </div>
+                <div class="feedback-section">
+                    <h3 class="feedback-title" id="final-title">Great Effort!</h3>
+                    <p>Your final experiment design score is:</p>
+                    <div class="final-score" id="final-score-value">--</div>
+                    <div id="final-feedback"></div>
+                </div>
+                <div class="next-step-section">
+                    <button class="btn btn-secondary" id="backToMenuBtn">Back to Scenarios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scenarioContainer = document.getElementById('scenario');
+            const introContainer = document.getElementById('intro');
+            const resultsContainer = document.getElementById('results');
+
+            let score;
+            let currentScenario;
+            let currentPhaseIndex;
+
+            const scenarios = [
+                {
+                    title: "Multi-County Regional System",
+                    situation: "A five-county regional system has varying maturity and resources. You need to test a way to develop regional coordination skills while respecting county autonomy.",
+                    phases: [
+                        {
+                            step: "Step 1: Choose the Approach",
+                            instruction: "Select the best low-risk experiment to test.",
+                            choices: [
+                                { text: "Propose a mandatory, standardized training for all five counties.", score: 20, rationale: "This top-down approach ignores county autonomy and varying resource levels, likely causing resistance." },
+                                { text: "Design a small-scale, voluntary mentoring program pairing leaders from two different counties.", score: 100, isOptimal: true, rationale: "This is optimal. It's a low-risk, voluntary experiment that respects autonomy and can reveal valuable lessons about cross-jurisdictional development." },
+                                { text: "Launch a full-scale regional leadership academy immediately.", score: 10, rationale: "This is too large for an initial experiment. It's high-risk, expensive, and doesn't allow for learning and adaptation." }
+                            ]
+                        },
+                        {
+                            step: "Step 2: Define the Learning Goal",
+                            instruction: "What is the most important thing to learn from this first experiment?",
+                            choices: [
+                                { text: "To prove that your development model is the best one.", score: 30, rationale: "The goal of an experiment is to learn, not to prove you're right. This mindset closes you off to valuable feedback." },
+                                { text: "To identify the biggest barriers to cross-jurisdictional collaboration.", score: 100, isOptimal: true, rationale: "This is the best choice. A successful experiment reveals what works and, just as importantly, what doesn't, providing crucial data for the next iteration." },
+                                { text: "To measure the immediate ROI of the training investment.", score: 40, rationale: "Leadership development is a long-term investment. Focusing on immediate ROI for an early experiment is unrealistic and misses the strategic value." }
+                            ]
+                        },
+                        {
+                            step: "Step 3: Define the Success Metric",
+                            instruction: "How will you measure the success of this initial pilot?",
+                            choices: [
+                                { text: "By the number of participants who complete the program.", score: 40, rationale: "Completion is a useful metric, but it doesn't measure actual learning or impact on coordination." },
+                                { text: "By a post-program survey asking participants if they found it valuable.", score: 60, rationale: "Participant feedback is important, but it's subjective. A stronger metric would measure behavioral change." },
+                                { text: "By observing an increase in informal, cross-county communication between the participants after the program.", score: 100, isOptimal: true, rationale: "This is optimal. It measures a real-world behavioral change that directly relates to the goal of improving coordination." }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "State Agency with Multi-Generational Workforce",
+                    situation: "A large state agency faces significant retirements. You need to design an experiment that transfers knowledge while building innovation skills across generations.",
+                    phases: [
+                        {
+                            step: "Step 1: Choose the Approach",
+                            instruction: "Select the best low-risk experiment to test.",
+                            choices: [
+                                { text: "Create a formal mentoring program where senior leaders lecture junior staff on their experience.", score: 40, rationale: "This one-way knowledge transfer doesn't build innovation and can feel condescending to younger staff." },
+                                { text: "Launch a 'reverse mentoring' pilot where tech-savvy junior staff are paired with senior leaders to solve a specific operational problem.", score: 100, isOptimal: true, rationale: "This is optimal. It creates a two-way value exchange, respects the expertise of all generations, and builds collaborative relationships." },
+                                { text: "Implement a new, complex software system to force everyone to learn new skills.", score: 10, rationale: "Forcing technology without a supportive culture is a high-risk strategy that often backfires, creating widespread resistance." }
+                            ]
+                        },
+                        {
+                            step: "Step 2: Define the Learning Goal",
+                            instruction: "What is the most important thing to learn from this first experiment?",
+                            choices: [
+                                { text: "To see if senior leaders are capable of learning new technology.", score: 30, rationale: "This frames the experiment in a judgmental way. The goal is to understand patterns, not to test individuals." },
+                                { text: "To identify the most effective ways to blend institutional knowledge with new technological approaches.", score: 100, isOptimal: true, rationale: "This is the best choice. It focuses on the systemic goal of integrating different strengths, which is the core of the challenge." },
+                                { text: "To prove that younger staff have better ideas.", score: 20, rationale: "This creates a competitive, win-lose dynamic that will damage intergenerational relationships." }
+                            ]
+                        },
+                         {
+                            step: "Step 3: Define the Success Metric",
+                            instruction: "How will you measure the success of this pilot?",
+                            choices: [
+                                { text: "By the successful resolution of the specific operational problem.", score: 70, rationale: "This is a good, tangible outcome, but it only measures the result, not the process or the relationship." },
+                                { text: "By positive feedback from both the junior and senior partners in the program.", score: 80, rationale: "Participant feedback is crucial for a relationship-based program, making this a strong metric." },
+                                { text: "By observing both the problem's resolution AND an increase in informal collaboration between the partners on other issues.", score: 100, isOptimal: true, rationale: "This is the best choice because it measures both the tangible outcome and the strategic goal of building a collaborative culture." }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: "Crisis-Prone Organization",
+                    situation: "An organization faces frequent activations, leaving little time for traditional development. You need an experiment that works within their high operational tempo.",
+                    phases: [
+                        {
+                            step: "Step 1: Choose the Approach",
+                            instruction: "Select the best low-risk experiment to test.",
+                            choices: [
+                                { text: "Schedule a mandatory 3-day leadership retreat for all managers.", score: 10, rationale: "This is unrealistic. A high-tempo organization cannot pull all its leaders away for an extended period." },
+                                { text: "Embed a 'developmental question' into the standard After-Action Review (AAR) process for the next three incidents.", score: 100, isOptimal: true, rationale: "This is optimal. It's a small, low-effort change that integrates development directly into existing operational rhythms without adding new meetings." },
+                                { text: "Purchase a library of leadership books for managers to read in their spare time.", score: 30, rationale: "This is a passive approach that is unlikely to be used by leaders who are already short on time." }
+                            ]
+                        },
+                        {
+                            step: "Step 2: Define the Learning Goal",
+                            instruction: "What is the most important thing to learn from this first experiment?",
+                            choices: [
+                                { text: "To see if leaders are willing to do extra work for their development.", score: 20, rationale: "This frames development as a burden. The goal is to make it an integrated, valuable part of their work." },
+                                { text: "To determine if operational debriefs can be a source of genuine leadership learning, not just tactical lessons.", score: 100, isOptimal: true, rationale: "This is the best choice. It tests the core hypothesis of the experiment: that development can be effectively embedded in operations." },
+                                { text: "To complete a formal report on leadership gaps for the annual review.", score: 50, rationale: "While useful, this focuses on a bureaucratic outcome. The primary goal of an experiment is learning that can inform the next cycle of improvements." }
+                            ]
+                        },
+                        {
+                            step: "Step 3: Define the Success Metric",
+                            instruction: "How will you measure the success of this experiment?",
+                            choices: [
+                                { text: "By tracking whether the question was asked in each of the next three AARs.", score: 60, rationale: "This measures compliance with the experiment, which is a good start, but it doesn't measure the quality or impact of the discussion." },
+                                { text: "By analyzing the AAR notes for evidence of deeper, more strategic conversations about leadership and systems.", score: 100, isOptimal: true, rationale: "This is optimal. It directly measures whether the intervention is achieving the goal of fostering developmental conversations." },
+                                { text: "By asking the facilitator if they thought the question was helpful.", score: 70, rationale: "This is a good qualitative measure, but analyzing the actual output (the AAR notes) provides more objective data." }
+                            ]
+                        }
+                    ]
+                }
+            ];
+            
+            function renderScenario(scenarioId) {
+                currentScenario = scenarios[scenarioId];
+                currentPhaseIndex = 0;
+                score = 0;
+                
+                scenarioContainer.innerHTML = `
+                    <div class="phase-header">
+                        <h3 class="phase-title">${currentScenario.title}</h3>
+                        <p class="phase-description">${currentScenario.situation}</p>
+                    </div>
+                    <div class="main-layout">
+                        <div class="decision-panel" id="decision-panel"></div>
+                        <aside class="sidebar">
+                            <div class="sidebar-section">
+                                <h3 class="sidebar-title">Experiment Design</h3>
+                                <div class="sidebar-content">
+                                    <ul>
+                                        <li>Start with small, low-risk tests.</li>
+                                        <li>Focus on learning, not just succeeding.</li>
+                                        <li>Adapt your approach based on what you learn.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                `;
+                
+                renderPhase();
+            }
+
+            function renderPhase() {
+                const phase = currentScenario.phases[currentPhaseIndex];
+                const decisionPanel = document.getElementById('decision-panel');
+                
+                let choicesHTML = '';
+                phase.choices.forEach((choice, index) => {
+                    choicesHTML += `<div class="choice-option" data-index="${index}"><p>${choice.text}</p></div>`;
+                });
+
+                decisionPanel.innerHTML = `
+                    <h3 class="step-title">${phase.step}</h3>
+                    <p class="step-instruction">${phase.instruction}</p>
+                    ${choicesHTML}
+                    <div id="choice-feedback" class="choice-feedback" style="display:none;"></div>
+                `;
+
+                document.querySelectorAll('.choice-option').forEach((btn, index) => {
+                    btn.addEventListener('click', () => handleChoiceSelection(index));
+                });
+            }
+
+            function handleChoiceSelection(choiceIndex) {
+                const phase = currentScenario.phases[currentPhaseIndex];
+                const selectedChoice = phase.choices[choiceIndex];
+                const selectedChoiceElement = document.querySelector(`.choice-option[data-index="${choiceIndex}"]`);
+
+                score += selectedChoice.score;
+                
+                document.querySelectorAll('.choice-option').forEach(btn => btn.classList.add('disabled'));
+
+                const optimalChoice = phase.choices.find(c => c.isOptimal);
+                
+                const feedbackBox = document.getElementById('choice-feedback');
+                let feedbackHTML = `<div class="feedback-item optimal-choice"><h5>Optimal Choice:</h5><p>${optimalChoice.rationale}</p></div>`;
+
+                if (!selectedChoice.isOptimal) {
+                    selectedChoiceElement.style.borderColor = 'var(--error-color)';
+                    feedbackHTML += `<div class="feedback-item your-choice"><h5>Your Choice:</h5><p>${selectedChoice.rationale}</p></div>`;
+                }
+                document.querySelector(`.choice-option[data-index="${phase.choices.indexOf(optimalChoice)}"]`).style.borderColor = 'var(--success-color)';
+                
+                feedbackHTML += `<button class="btn btn-primary" id="continueBtn" style="margin-top: 1rem;">Continue</button>`;
+                feedbackBox.innerHTML = feedbackHTML;
+                feedbackBox.style.display = 'block';
+
+                document.getElementById('continueBtn').addEventListener('click', () => {
+                    currentPhaseIndex++;
+                    if (currentPhaseIndex < currentScenario.phases.length) {
+                        renderPhase();
+                    } else {
+                        showResults();
+                    }
+                });
+            }
+
+            function showResults() {
+                scenarioContainer.classList.remove('active');
+                resultsContainer.classList.add('active');
+                
+                const finalScore = Math.round(score / currentScenario.phases.length);
+                const finalScoreEl = document.getElementById('final-score-value');
+                const finalFeedbackEl = document.getElementById('final-feedback');
+                const finalTitleEl = document.getElementById('final-title');
+
+                finalScoreEl.textContent = `${finalScore} / 100`;
+                
+                if (finalScore >= 80) {
+                    finalTitleEl.textContent = "Excellent!";
+                    finalFeedbackEl.innerHTML = "<p>You designed a thoughtful and effective experiment. This approach allows for learning and adaptation, which is key to building a sustainable leadership pipeline.</p>";
+                    finalScoreEl.style.color = 'var(--success-color)';
+                } else if (finalScore >= 50) {
+                    finalTitleEl.textContent = "Solid Performance!";
+                    finalFeedbackEl.innerHTML = "<p>Your experiment design is on the right track. To improve, focus on creating smaller, lower-risk tests that maximize learning before scaling up.</p>";
+                    finalScoreEl.style.color = 'var(--warning-color)';
+                } else {
+                    finalTitleEl.textContent = "Room for Improvement";
+                    finalFeedbackEl.innerHTML = "<p>Your experimental design was either too risky or not focused on the most critical learning goals. Remember, the aim of these small tests is to learn, not necessarily to succeed on the first try.</p>";
+                    finalScoreEl.style.color = 'var(--error-color)';
+                }
+            }
+
+            function startScenario(scenarioId) {
+                introContainer.classList.remove('active');
+                resultsContainer.classList.remove('active');
+                scenarioContainer.classList.add('active');
+                renderScenario(scenarioId);
+            }
+            
+            function showIntro() {
+                const grid = introContainer.querySelector('.scenario-selection-grid');
+                grid.innerHTML = '';
+                scenarios.forEach((scenario, index) => {
+                    grid.innerHTML += `<div class="scenario-card" data-scenario-id="${index}"><h3>${scenario.title}</h3></div>`;
+                });
+                 document.querySelectorAll('.scenario-card').forEach(card => {
+                    card.addEventListener('click', (e) => startScenario(parseInt(e.currentTarget.dataset.scenarioId)));
+                });
+            }
+
+            document.getElementById('backToMenuBtn').addEventListener('click', () => {
+                 resultsContainer.classList.remove('active');
+                 introContainer.classList.add('active');
+            });
+            
+            showIntro();
+        });
+    </script>
+</body>
+</html>
